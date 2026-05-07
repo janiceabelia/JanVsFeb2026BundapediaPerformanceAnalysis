@@ -1,0 +1,874 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Bundapedia — Jan vs Apr Performance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="deck-stage.js"></script>
+<style>
+  :root{
+    --pink:#FF2E7E;
+    --pink-2:#FF6FA8;
+    --pink-soft:#FFE4EE;
+    --blue:#1E5BFF;
+    --blue-2:#5A86FF;
+    --blue-soft:#E4ECFF;
+    --ink:#0F1633;
+    --ink-2:#3A4170;
+    --paper:#FBFBFE;
+    --paper-2:#F2F4FB;
+    --line:#E2E5F1;
+
+    --type-display:120px;
+    --type-title:64px;
+    --type-subtitle:40px;
+    --type-body:30px;
+    --type-small:24px;
+    --type-mono:22px;
+
+    --pad-x:100px;
+    --pad-top:90px;
+    --pad-bottom:80px;
+    --gap-title:44px;
+    --gap-item:24px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#0a0d1a;color:var(--ink);font-family:'Plus Jakarta Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  deck-stage section{
+    background:var(--paper);
+    color:var(--ink);
+    padding:var(--pad-top) var(--pad-x) var(--pad-bottom);
+    overflow:hidden;
+    position:relative;
+  }
+
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:var(--type-small);
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--ink-2);
+    font-weight:500;
+  }
+  .eyebrow .pink{color:var(--pink)}
+  .eyebrow .blue{color:var(--blue)}
+
+  h1.title{
+    font-size:var(--type-title);
+    font-weight:800;
+    line-height:1.04;
+    margin:0;
+    letter-spacing:-.02em;
+    text-wrap:balance;
+  }
+  h2.kicker{
+    font-size:var(--type-subtitle);
+    font-weight:600;
+    line-height:1.15;
+    margin:0;
+    color:var(--ink-2);
+    letter-spacing:-.01em;
+  }
+  .body{
+    font-size:var(--type-body);
+    line-height:1.4;
+    color:var(--ink-2);
+    margin:0;
+  }
+  .mono{font-family:'JetBrains Mono',monospace}
+
+  .header-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:var(--gap-title);
+  }
+  .footer-row{
+    position:absolute;
+    left:var(--pad-x);
+    right:var(--pad-x);
+    bottom:36px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-family:'JetBrains Mono',monospace;
+    font-size:24px;
+    color:var(--ink-2);
+    letter-spacing:.12em;
+    text-transform:uppercase;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    font-weight:700;
+    color:var(--ink);
+    font-size:24px;
+  }
+  .brand .dot{
+    width:14px;height:14px;border-radius:50%;
+    background:linear-gradient(135deg,var(--pink),var(--blue));
+  }
+
+  .chip{
+    display:inline-flex;align-items:center;gap:10px;
+    padding:10px 18px;border-radius:999px;
+    font-family:'JetBrains Mono',monospace;font-size:24px;
+    letter-spacing:.1em;text-transform:uppercase;font-weight:500;
+  }
+  .chip.pink{background:var(--pink-soft);color:var(--pink)}
+  .chip.blue{background:var(--blue-soft);color:var(--blue)}
+  .chip .sq{width:10px;height:10px;border-radius:2px}
+  .chip.pink .sq{background:var(--pink)}
+  .chip.blue .sq{background:var(--blue)}
+
+  /* ---- Cover ---- */
+  .cover{
+    background:linear-gradient(135deg,#FFF0F6 0%,#F0F4FF 100%);
+  }
+  .cover .grid-bg{
+    position:absolute;inset:0;
+    background-image:
+      linear-gradient(var(--line) 1px,transparent 1px),
+      linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:80px 80px;
+    opacity:.6;
+    mask-image:radial-gradient(ellipse at 70% 30%,#000 30%,transparent 75%);
+  }
+  .cover .content{position:relative;z-index:2;display:flex;flex-direction:column;height:100%;justify-content:space-between}
+  .cover h1{
+    font-size:140px;font-weight:800;line-height:.92;letter-spacing:-.035em;margin:0;
+  }
+  .cover h1 .vs{
+    display:inline-block;
+    font-style:italic;
+    font-weight:500;
+    color:var(--ink-2);
+    margin:0 24px;
+    font-size:96px;
+    transform:translateY(-12px);
+  }
+  .cover h1 .jan{color:var(--pink)}
+  .cover h1 .apr{color:var(--blue)}
+  .cover .meta{display:flex;gap:24px;align-items:center}
+  .cover .footer-row{font-size:24px}
+  .cover .sub{
+    font-size:36px;color:var(--ink-2);font-weight:500;max-width:1100px;line-height:1.3;margin-bottom:80px;
+  }
+
+  /* ---- Stat tiles ---- */
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:28px}
+  .stat{
+    background:#fff;border:1px solid var(--line);border-radius:24px;
+    padding:36px 36px 32px;display:flex;flex-direction:column;gap:12px;
+    position:relative;overflow:hidden;
+  }
+  .stat .label{
+    font-family:'JetBrains Mono',monospace;font-size:24px;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2);font-weight:500;
+  }
+  .stat .nums{display:flex;align-items:baseline;gap:18px;flex-wrap:wrap}
+  .stat .jan-num{font-size:34px;color:var(--pink);font-weight:700}
+  .stat .arrow{font-size:28px;color:var(--ink-2)}
+  .stat .apr-num{font-size:54px;color:var(--blue);font-weight:800;letter-spacing:-.02em}
+  .stat .delta{
+    margin-top:auto;
+    display:inline-flex;align-items:center;gap:10px;
+    background:linear-gradient(90deg,var(--pink) 0%,var(--blue) 100%);
+    color:#fff;font-weight:700;font-size:24px;
+    padding:8px 18px;border-radius:999px;
+    align-self:flex-start;
+    font-family:'JetBrains Mono',monospace;letter-spacing:.04em;
+  }
+  .stat.neg .delta{background:#94A3C7}
+
+  /* ---- Two-column ---- */
+  .two-col{display:grid;grid-template-columns:1.05fr 1fr;gap:60px;height:calc(100% - var(--pad-top) - var(--pad-bottom) - 100px)}
+  .chart-wrap{
+    background:#fff;border:1px solid var(--line);border-radius:24px;
+    padding:32px;position:relative;display:flex;flex-direction:column;
+  }
+  .chart-wrap .chart-title{
+    font-family:'JetBrains Mono',monospace;font-size:24px;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2);font-weight:500;
+    margin-bottom:8px;
+  }
+  .chart-wrap .chart-sub{font-size:24px;font-weight:600;color:var(--ink);margin-bottom:18px}
+  .chart-wrap .chart-canvas{flex:1;position:relative;min-height:0}
+  .legend{display:flex;gap:24px;margin-top:14px}
+
+  .points{display:flex;flex-direction:column;gap:24px;justify-content:center}
+  .point{
+    border-left:4px solid var(--pink);
+    padding:8px 0 8px 28px;
+  }
+  .point.blue{border-left-color:var(--blue)}
+  .point .lab{
+    font-family:'JetBrains Mono',monospace;font-size:24px;letter-spacing:.14em;
+    text-transform:uppercase;font-weight:500;color:var(--ink-2);margin-bottom:8px;
+  }
+  .point .val{font-size:48px;font-weight:800;letter-spacing:-.015em;line-height:1.05}
+  .point .desc{font-size:24px;color:var(--ink-2);line-height:1.35;margin-top:8px}
+  .point.pink .val{color:var(--pink)}
+  .point.blue .val{color:var(--blue)}
+
+  /* ---- Big number ---- */
+  .big-display{
+    display:flex;align-items:center;justify-content:center;flex-direction:column;
+    text-align:center;height:calc(100% - var(--pad-top) - var(--pad-bottom));
+  }
+  .big-display .num{
+    font-size:var(--type-display);
+    font-weight:800;letter-spacing:-.04em;line-height:.9;
+    background:linear-gradient(135deg,var(--pink) 0%,var(--blue) 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .big-display .num-2{font-size:280px;line-height:.85}
+
+  /* ---- Donut row ---- */
+  .donut-row{display:grid;grid-template-columns:1fr 1fr;gap:60px;height:calc(100% - var(--pad-top) - var(--pad-bottom) - 130px)}
+  .donut-card{
+    background:#fff;border:1px solid var(--line);border-radius:24px;
+    padding:36px;display:flex;flex-direction:column;align-items:center;
+  }
+  .donut-card.jan{border-top:6px solid var(--pink)}
+  .donut-card.apr{border-top:6px solid var(--blue)}
+  .donut-card .head{font-family:'JetBrains Mono',monospace;font-size:24px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;margin-bottom:18px}
+  .donut-card.jan .head{color:var(--pink)}
+  .donut-card.apr .head{color:var(--blue)}
+  .donut-card .canvas-box{width:380px;height:380px;position:relative}
+
+  /* ---- Territory bars ---- */
+  .terr-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;height:calc(100% - var(--pad-top) - var(--pad-bottom) - 130px)}
+  .terr-card{background:#fff;border:1px solid var(--line);border-radius:24px;padding:40px;display:flex;flex-direction:column}
+  .terr-card.jan{border-left:6px solid var(--pink)}
+  .terr-card.apr{border-left:6px solid var(--blue)}
+  .terr-card .h{font-family:'JetBrains Mono',monospace;font-size:24px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;margin-bottom:8px}
+  .terr-card.jan .h{color:var(--pink)}
+  .terr-card.apr .h{color:var(--blue)}
+  .terr-card .month{font-size:34px;font-weight:700;margin-bottom:24px}
+  .terr-row{display:grid;grid-template-columns:90px 1fr 100px;gap:18px;align-items:center;padding:10px 0}
+  .terr-row .code{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:26px}
+  .terr-row .bar{height:18px;background:var(--paper-2);border-radius:99px;overflow:hidden;position:relative}
+  .terr-row .fill{height:100%;border-radius:99px}
+  .terr-card.jan .fill{background:var(--pink)}
+  .terr-card.apr .fill{background:var(--blue)}
+  .terr-row .pct{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:26px;text-align:right}
+
+  /* ---- Breakout ---- */
+  .breakout-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;height:calc(100% - var(--pad-top) - var(--pad-bottom) - 100px)}
+  .breakout-stat{
+    background:linear-gradient(135deg,var(--pink) 0%,var(--blue) 100%);
+    color:#fff;border-radius:24px;padding:60px;display:flex;flex-direction:column;justify-content:center;
+  }
+  .breakout-stat .lab{font-family:'JetBrains Mono',monospace;font-size:26px;letter-spacing:.16em;text-transform:uppercase;font-weight:500;opacity:.85;margin-bottom:18px}
+  .breakout-stat .v{font-size:140px;font-weight:800;letter-spacing:-.03em;line-height:.9}
+  .breakout-stat .d{font-size:28px;margin-top:18px;line-height:1.35;opacity:.92}
+  .breakout-list{display:flex;flex-direction:column;gap:20px;justify-content:center}
+  .br-item{display:grid;grid-template-columns:120px 1fr;gap:24px;align-items:baseline;padding:14px 0;border-bottom:1px solid var(--line)}
+  .br-item:last-child{border-bottom:none}
+  .br-item .date{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:26px;color:var(--ink-2)}
+  .br-item .val{font-size:34px;font-weight:700}
+  .br-item .ann{font-size:24px;color:var(--ink-2);margin-top:4px}
+
+  /* ---- Takeaways ---- */
+  .takeaways{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;height:calc(100% - var(--pad-top) - var(--pad-bottom) - 100px)}
+  .ta{
+    background:#fff;border:1px solid var(--line);border-radius:24px;padding:40px;
+    display:flex;flex-direction:column;
+  }
+  .ta .num{
+    font-family:'JetBrains Mono',monospace;font-size:26px;letter-spacing:.14em;font-weight:600;margin-bottom:16px;
+  }
+  .ta.t1{border-top:6px solid var(--pink)}
+  .ta.t2{border-top:6px solid var(--blue)}
+  .ta.t3{border-top:6px solid #B43FB4}
+  .ta.t1 .num{color:var(--pink)}
+  .ta.t2 .num{color:var(--blue)}
+  .ta.t3 .num{color:#B43FB4}
+  .ta h3{font-size:36px;font-weight:700;line-height:1.15;margin:0 0 16px;letter-spacing:-.01em}
+  .ta p{font-size:24px;line-height:1.45;color:var(--ink-2);margin:0}
+
+  /* ---- Section divider ---- */
+  .divider{
+    background:linear-gradient(135deg,var(--pink) 0%,#B43FB4 50%,var(--blue) 100%);
+    color:#fff;
+    display:flex;align-items:center;
+  }
+  .divider .num{
+    font-family:'JetBrains Mono',monospace;font-size:32px;letter-spacing:.16em;opacity:.8;font-weight:500;
+  }
+  .divider h1{
+    font-size:160px;font-weight:800;line-height:.95;letter-spacing:-.03em;margin:24px 0 0;
+  }
+  .divider .sub{font-size:34px;margin-top:24px;max-width:1300px;line-height:1.35;opacity:.92;font-weight:500}
+
+  /* ---- Followers slide ---- */
+  .followers-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:60px;height:calc(100% - var(--pad-top) - var(--pad-bottom) - 100px)}
+  .stat-2{
+    background:#fff;border:1px solid var(--line);border-radius:24px;padding:36px;
+    display:flex;flex-direction:column;gap:14px;
+  }
+  .stat-2 .l{font-family:'JetBrains Mono',monospace;font-size:24px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2);font-weight:500}
+  .stat-2 .v{font-size:64px;font-weight:800;letter-spacing:-.02em;line-height:1}
+  .stat-2 .d{font-size:24px;color:var(--ink-2);line-height:1.35}
+  .stat-2.pink .v{color:var(--pink)}
+  .stat-2.blue .v{color:var(--blue)}
+  .stat-2-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-content:start}
+
+</style>
+</head>
+<body>
+
+<deck-stage width="1920" height="1080">
+
+  <!-- 01: Cover -->
+  <section data-label="01 Cover" class="cover">
+    <div class="grid-bg"></div>
+    <div class="content">
+      <div class="header-row">
+        <div class="brand"><span class="dot"></span><span>@bundapedia.tiktokshop</span></div>
+        <div class="eyebrow">PERFORMANCE REPORT &nbsp;/&nbsp; 2026</div>
+      </div>
+      <div>
+        <div class="eyebrow" style="margin-bottom:32px"><span class="pink">●</span> JANUARY &nbsp;&nbsp; <span class="blue">●</span> APRIL</div>
+        <h1>
+          <span class="jan">January</span>
+          <span class="vs">vs.</span>
+          <span class="apr">April</span>
+        </h1>
+        <p class="sub" style="margin-top:36px">A side-by-side look at how content reach, engagement, and audience behavior shifted across the quarter.</p>
+      </div>
+      <div class="footer-row" style="font-size:24px">
+        <span>BUNDAPEDIA TIKTOK SHOP</span>
+        <span>JAN — APR 2026</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02: Executive Summary -->
+  <section data-label="02 Executive Summary">
+    <div class="header-row">
+      <div class="eyebrow"><span class="pink">●</span> 02 &nbsp; EXECUTIVE SUMMARY</div>
+      <div class="brand"><span class="dot"></span><span>@bundapedia.tiktokshop</span></div>
+    </div>
+    <h1 class="title" style="max-width:1500px">April marks a clear breakout — reach scaled <span style="color:var(--blue)">~248×</span> over January.</h1>
+    <h2 class="kicker" style="margin-top:28px;max-width:1500px">Engagement lifted across every metric except comments, with the biggest gains on shares and likes. Follower count stabilized after months of slow decline.</h2>
+
+    <div class="stat-grid" style="margin-top:60px">
+      <div class="stat">
+        <div class="label">Video Views</div>
+        <div class="nums">
+          <span class="jan-num">5,955</span>
+          <span class="arrow">→</span>
+          <span class="apr-num">1.48M</span>
+        </div>
+        <span class="delta">+24,684%</span>
+      </div>
+      <div class="stat">
+        <div class="label">Likes</div>
+        <div class="nums">
+          <span class="jan-num">122</span>
+          <span class="arrow">→</span>
+          <span class="apr-num">1,303</span>
+        </div>
+        <span class="delta">+968%</span>
+      </div>
+      <div class="stat">
+        <div class="label">Shares</div>
+        <div class="nums">
+          <span class="jan-num">3</span>
+          <span class="arrow">→</span>
+          <span class="apr-num">1,300</span>
+        </div>
+        <span class="delta">+43,233%</span>
+      </div>
+      <div class="stat">
+        <div class="label">Profile Views</div>
+        <div class="nums">
+          <span class="jan-num">542</span>
+          <span class="arrow">→</span>
+          <span class="apr-num">1,256</span>
+        </div>
+        <span class="delta">+132%</span>
+      </div>
+    </div>
+    <div class="footer-row"><span>EXECUTIVE SUMMARY</span><span>02 / 11</span></div>
+  </section>
+
+  <!-- 03: Headline metrics (big visual) -->
+  <section data-label="03 Headline Metrics">
+    <div class="header-row">
+      <div class="eyebrow"><span class="pink">●</span> 03 &nbsp; HEADLINE METRICS</div>
+      <div style="display:flex;gap:14px"><span class="chip pink"><span class="sq"></span>JAN</span><span class="chip blue"><span class="sq"></span>APR</span></div>
+    </div>
+    <h1 class="title">From a quiet month to a viral one.</h1>
+    <h2 class="kicker" style="margin-top:18px">April daily averages dwarf January's monthly totals on most metrics.</h2>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:60px;margin-top:60px;height:560px">
+      <div class="chart-wrap">
+        <div class="chart-title">AVG DAILY VIDEO VIEWS</div>
+        <div class="chart-sub">January vs April</div>
+        <div class="chart-canvas"><canvas id="chart-avg-views"></canvas></div>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-title">TOTAL ENGAGEMENT (LIKES + SHARES + COMMENTS)</div>
+        <div class="chart-sub">Monthly totals</div>
+        <div class="chart-canvas"><canvas id="chart-engagement"></canvas></div>
+      </div>
+    </div>
+    <div class="footer-row"><span>HEADLINE METRICS</span><span>03 / 11</span></div>
+  </section>
+
+  <!-- 04: Daily views trend -->
+  <section data-label="04 Daily Views Trend">
+    <div class="header-row">
+      <div class="eyebrow"><span class="pink">●</span> 04 &nbsp; DAILY VIDEO VIEWS</div>
+      <div style="display:flex;gap:14px"><span class="chip pink"><span class="sq"></span>JAN</span><span class="chip blue"><span class="sq"></span>APR</span></div>
+    </div>
+    <h1 class="title">A flat baseline in January, a hockey stick in April.</h1>
+
+    <div class="two-col" style="margin-top:50px">
+      <div class="chart-wrap">
+        <div class="chart-title">DAILY VIDEO VIEWS — DAY 1 TO 31</div>
+        <div class="chart-sub">Logarithmic scale to fit both months</div>
+        <div class="chart-canvas"><canvas id="chart-daily-views"></canvas></div>
+      </div>
+      <div class="points">
+        <div class="point pink">
+          <div class="lab">January Peak</div>
+          <div class="val">317</div>
+          <div class="desc">Best day of the month — 30 January. Daily views stayed in a tight 70–320 band all month.</div>
+        </div>
+        <div class="point blue">
+          <div class="lab">April Peak</div>
+          <div class="val">258,686</div>
+          <div class="desc">24 April — 816× larger than January's best day. Eight consecutive days above 60K views.</div>
+        </div>
+        <div class="point blue">
+          <div class="lab">Daily Average</div>
+          <div class="val">50,893</div>
+          <div class="desc">April's typical day produced more views than all of January combined (5,955).</div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-row"><span>DAILY VIEWS</span><span>04 / 11</span></div>
+  </section>
+
+  <!-- 05: Engagement -->
+  <section data-label="05 Engagement Growth">
+    <div class="header-row">
+      <div class="eyebrow"><span class="pink">●</span> 05 &nbsp; ENGAGEMENT GROWTH</div>
+      <div style="display:flex;gap:14px"><span class="chip pink"><span class="sq"></span>JAN</span><span class="chip blue"><span class="sq"></span>APR</span></div>
+    </div>
+    <h1 class="title">Likes scaled with reach. Shares scaled even faster.</h1>
+
+    <div class="two-col" style="margin-top:50px">
+      <div class="chart-wrap">
+        <div class="chart-title">ENGAGEMENT BY ACTION</div>
+        <div class="chart-sub">January vs April totals</div>
+        <div class="chart-canvas"><canvas id="chart-engagement-bars"></canvas></div>
+      </div>
+      <div class="points">
+        <div class="point pink">
+          <div class="lab">Likes — January</div>
+          <div class="val">122</div>
+          <div class="desc">Avg ~4 likes per day across the month.</div>
+        </div>
+        <div class="point blue">
+          <div class="lab">Likes — April</div>
+          <div class="val">1,303 <span style="font-size:24px;color:var(--ink-2);font-weight:600">&nbsp;+968%</span></div>
+          <div class="desc">29 April alone delivered 319 likes — more than 2.6× all of January.</div>
+        </div>
+        <div class="point blue">
+          <div class="lab">Shares — April</div>
+          <div class="val">1,300 <span style="font-size:24px;color:var(--ink-2);font-weight:600">&nbsp;vs. 3 in Jan</span></div>
+          <div class="desc">22 April produced 1,228 shares in a single day — the strongest organic distribution signal of the period.</div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-row"><span>ENGAGEMENT</span><span>05 / 11</span></div>
+  </section>
+
+  <!-- 06: Profile views -->
+  <section data-label="06 Profile Visits">
+    <div class="header-row">
+      <div class="eyebrow"><span class="pink">●</span> 06 &nbsp; PROFILE VISITS</div>
+      <div style="display:flex;gap:14px"><span class="chip pink"><span class="sq"></span>JAN</span><span class="chip blue"><span class="sq"></span>APR</span></div>
+    </div>
+    <h1 class="title">Profile traffic more than doubled.</h1>
+    <h2 class="kicker" style="margin-top:18px">Curiosity from new viewers translated into real shop visits — especially in the back half of April.</h2>
+
+    <div class="two-col" style="margin-top:40px">
+      <div class="chart-wrap">
+        <div class="chart-title">DAILY PROFILE VIEWS</div>
+        <div class="chart-sub">January vs April</div>
+        <div class="chart-canvas"><canvas id="chart-profile"></canvas></div>
+      </div>
+      <div class="points">
+        <div class="point pink">
+          <div class="lab">January Total</div>
+          <div class="val">542</div>
+          <div class="desc">Avg ~17 profile visits per day. Best day: 8 Jan (43).</div>
+        </div>
+        <div class="point blue">
+          <div class="lab">April Total</div>
+          <div class="val">1,256 <span style="font-size:24px;color:var(--ink-2);font-weight:600">&nbsp;+132%</span></div>
+          <div class="desc">Best day: 23 April (171). 9 days exceeded January's daily peak.</div>
+        </div>
+        <div class="point blue">
+          <div class="lab">Conversion Read</div>
+          <div class="val">~0.085%</div>
+          <div class="desc">April views→profile rate. Lower than January's ~9.1%, expected with viral reach — but absolute visits ↑ 2.3×.</div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-row"><span>PROFILE VISITS</span><span>06 / 11</span></div>
+  </section>
+
+  <!-- 07: Followers snapshot -->
+  <section data-label="07 Followers Snapshot">
+    <div class="header-row">
+      <div class="eyebrow"><span class="pink">●</span> 07 &nbsp; FOLLOWERS</div>
+      <div style="display:flex;gap:14px"><span class="chip pink"><span class="sq"></span>JAN</span><span class="chip blue"><span class="sq"></span>APR</span></div>
+    </div>
+    <h1 class="title">The decline slowed — and reversed at month-end.</h1>
+    <h2 class="kicker" style="margin-top:18px">Daily losses shrank from ~28/day in January to ~10/day in April, with a +303 net gain on 28 April.</h2>
+
+    <div class="followers-grid" style="margin-top:40px">
+      <div class="chart-wrap">
+        <div class="chart-title">FOLLOWER COUNT — DAILY</div>
+        <div class="chart-sub">Indexed to month start</div>
+        <div class="chart-canvas"><canvas id="chart-followers"></canvas></div>
+      </div>
+      <div class="stat-2-grid">
+        <div class="stat-2 pink">
+          <div class="l">JAN — Avg Daily Δ</div>
+          <div class="v">−28</div>
+          <div class="d">Steady decline; lost 852 followers across the month.</div>
+        </div>
+        <div class="stat-2 blue">
+          <div class="l">APR — Avg Daily Δ</div>
+          <div class="v">−5</div>
+          <div class="d">Decline rate cut by ~82%. Net change: +49 by 29 April.</div>
+        </div>
+        <div class="stat-2 pink">
+          <div class="l">JAN End-of-Month</div>
+          <div class="v">112,115</div>
+          <div class="d">From 113,005 on Dec 31.</div>
+        </div>
+        <div class="stat-2 blue">
+          <div class="l">APR End-of-Month</div>
+          <div class="v">111,673</div>
+          <div class="d">First positive day in months on 23 April (+6).</div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-row"><span>FOLLOWERS</span><span>07 / 11</span></div>
+  </section>
+
+  <!-- 08: Demographics -->
+  <section data-label="08 Demographics">
+    <div class="header-row">
+      <div class="eyebrow"><span class="pink">●</span> 08 &nbsp; AUDIENCE DEMOGRAPHICS</div>
+      <div style="display:flex;gap:14px"><span class="chip pink"><span class="sq"></span>JAN</span><span class="chip blue"><span class="sq"></span>APR</span></div>
+    </div>
+    <h1 class="title">A stable audience profile through growth.</h1>
+    <h2 class="kicker" style="margin-top:18px">Gender mix held steady — viral reach did not skew the core audience.</h2>
+
+    <div class="donut-row" style="margin-top:40px">
+      <div class="donut-card jan">
+        <div class="head">JANUARY — GENDER MIX</div>
+        <div class="canvas-box"><canvas id="chart-gender-jan"></canvas></div>
+        <div style="display:flex;gap:32px;margin-top:24px;font-family:'JetBrains Mono',monospace;font-size:26px">
+          <div><span style="color:var(--pink);font-weight:700">58%</span> Male</div>
+          <div><span style="color:var(--pink-2);font-weight:700">38%</span> Female</div>
+          <div><span style="color:#C9A6BE;font-weight:700">4%</span> Other</div>
+        </div>
+      </div>
+      <div class="donut-card apr">
+        <div class="head">APRIL — GENDER MIX</div>
+        <div class="canvas-box"><canvas id="chart-gender-apr"></canvas></div>
+        <div style="display:flex;gap:32px;margin-top:24px;font-family:'JetBrains Mono',monospace;font-size:26px">
+          <div><span style="color:var(--blue);font-weight:700">59%</span> Male</div>
+          <div><span style="color:var(--blue-2);font-weight:700">37%</span> Female</div>
+          <div><span style="color:#A6BAD9;font-weight:700">4%</span> Other</div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-row"><span>DEMOGRAPHICS</span><span>08 / 11</span></div>
+  </section>
+
+  <!-- 09: Top territories -->
+  <section data-label="09 Top Territories">
+    <div class="header-row">
+      <div class="eyebrow"><span class="pink">●</span> 09 &nbsp; TOP TERRITORIES</div>
+      <div style="display:flex;gap:14px"><span class="chip pink"><span class="sq"></span>JAN</span><span class="chip blue"><span class="sq"></span>APR</span></div>
+    </div>
+    <h1 class="title">Indonesia remains the home market — share ticked up to 70%.</h1>
+
+    <div class="terr-grid" style="margin-top:40px">
+      <div class="terr-card jan">
+        <div class="h">JANUARY</div>
+        <div class="month">Top 6 Territories</div>
+        <div class="terr-row"><span class="code">ID</span><div class="bar"><div class="fill" style="width:99%"></div></div><span class="pct">69.9%</span></div>
+        <div class="terr-row"><span class="code">US</span><div class="bar"><div class="fill" style="width:1.4%"></div></div><span class="pct">0.4%</span></div>
+        <div class="terr-row"><span class="code">MY</span><div class="bar"><div class="fill" style="width:0.8%"></div></div><span class="pct">0.2%</span></div>
+        <div class="terr-row"><span class="code">IN</span><div class="bar"><div class="fill" style="width:0.5%"></div></div><span class="pct">0.1%</span></div>
+        <div class="terr-row"><span class="code">JP</span><div class="bar"><div class="fill" style="width:0.5%"></div></div><span class="pct">0.1%</span></div>
+        <div class="terr-row"><span class="code">SA</span><div class="bar"><div class="fill" style="width:0.5%"></div></div><span class="pct">0.1%</span></div>
+        <div class="terr-row" style="opacity:.7"><span class="code">Others</span><div class="bar"><div class="fill" style="width:42%"></div></div><span class="pct">29.2%</span></div>
+      </div>
+      <div class="terr-card apr">
+        <div class="h">APRIL</div>
+        <div class="month">Top 6 Territories</div>
+        <div class="terr-row"><span class="code">ID</span><div class="bar"><div class="fill" style="width:100%"></div></div><span class="pct">70.1%</span></div>
+        <div class="terr-row"><span class="code">US</span><div class="bar"><div class="fill" style="width:1.4%"></div></div><span class="pct">0.4%</span></div>
+        <div class="terr-row"><span class="code">MY</span><div class="bar"><div class="fill" style="width:0.8%"></div></div><span class="pct">0.2%</span></div>
+        <div class="terr-row"><span class="code">IN</span><div class="bar"><div class="fill" style="width:0.5%"></div></div><span class="pct">0.1%</span></div>
+        <div class="terr-row"><span class="code">JP</span><div class="bar"><div class="fill" style="width:0.5%"></div></div><span class="pct">0.1%</span></div>
+        <div class="terr-row"><span class="code">SA</span><div class="bar"><div class="fill" style="width:0.5%"></div></div><span class="pct">0.1%</span></div>
+        <div class="terr-row" style="opacity:.7"><span class="code">Others</span><div class="bar"><div class="fill" style="width:41%"></div></div><span class="pct">29.0%</span></div>
+      </div>
+    </div>
+    <div class="footer-row"><span>TERRITORIES</span><span>09 / 11</span></div>
+  </section>
+
+  <!-- 10: Breakout moment -->
+  <section data-label="10 Breakout Moment">
+    <div class="header-row">
+      <div class="eyebrow"><span class="pink">●</span> 10 &nbsp; THE BREAKOUT WEEK</div>
+      <div style="display:flex;gap:14px"><span class="chip pink"><span class="sq"></span>JAN</span><span class="chip blue"><span class="sq"></span>APR</span></div>
+    </div>
+    <h1 class="title">21–28 April: the week that changed the trajectory.</h1>
+
+    <div class="breakout-grid" style="margin-top:48px">
+      <div class="breakout-stat">
+        <div class="lab">VIEWS — APR 21–28</div>
+        <div class="v">1.40M</div>
+        <div class="d">Eight consecutive days of breakout reach, peaking at 258,686 views on 24 April.</div>
+      </div>
+      <div class="breakout-list">
+        <div class="br-item"><span class="date">APR 21</span><div><div class="val">110,882 <span style="font-size:24px;font-weight:600;color:var(--blue)">views</span></div><div class="ann">Inflection point — first day above 100K.</div></div></div>
+        <div class="br-item"><span class="date">APR 22</span><div><div class="val">1,228 <span style="font-size:24px;font-weight:600;color:var(--pink)">shares</span></div><div class="ann">Single-day share record; ~410× any January day.</div></div></div>
+        <div class="br-item"><span class="date">APR 24</span><div><div class="val">258,686 <span style="font-size:24px;font-weight:600;color:var(--blue)">views</span></div><div class="ann">Peak day — 816× January's best day.</div></div></div>
+        <div class="br-item"><span class="date">APR 28</span><div><div class="val">+303 <span style="font-size:24px;font-weight:600;color:var(--pink)">followers</span></div><div class="ann">First major net follower gain in the period.</div></div></div>
+        <div class="br-item"><span class="date">APR 29</span><div><div class="val">319 <span style="font-size:24px;font-weight:600;color:var(--blue)">likes</span></div><div class="ann">Single-day likes record — 2.6× all of January.</div></div></div>
+      </div>
+    </div>
+    <div class="footer-row"><span>BREAKOUT WEEK</span><span>10 / 11</span></div>
+  </section>
+
+  <!-- 11: Takeaways -->
+  <section data-label="11 Takeaways">
+    <div class="header-row">
+      <div class="eyebrow"><span class="pink">●</span> 11 &nbsp; KEY TAKEAWAYS</div>
+      <div class="brand"><span class="dot"></span><span>@bundapedia.tiktokshop</span></div>
+    </div>
+    <h1 class="title">Three things to carry into May.</h1>
+
+    <div class="takeaways" style="margin-top:50px">
+      <div class="ta t1">
+        <div class="num">01 — REACH</div>
+        <h3>The algorithm finally caught a piece of content.</h3>
+        <p>April's 1.48M views came from a short streak (Apr 21–28). Identify the post format that triggered it and double down — viral lift is repeatable when the trigger is understood.</p>
+      </div>
+      <div class="ta t2">
+        <div class="num">02 — ENGAGEMENT</div>
+        <h3>Shares outperformed every other action.</h3>
+        <p>Likes grew 10×, shares grew 433×. Audiences are forwarding the content, not just consuming it — a strong organic-distribution signal worth amplifying with paid boost.</p>
+      </div>
+      <div class="ta t3">
+        <div class="num">03 — AUDIENCE</div>
+        <h3>Decline is reversing; convert curiosity to follows.</h3>
+        <p>Profile-visit rate dropped under viral load, but absolute visits 2.3×'d. Use the bio + pinned content to capture follows from the new traffic — the +303 day on Apr 28 shows it works.</p>
+      </div>
+    </div>
+    <div class="footer-row"><span>TAKEAWAYS</span><span>11 / 11</span></div>
+  </section>
+
+</deck-stage>
+
+<script>
+  const PINK = '#FF2E7E', PINK2 = '#FF6FA8', BLUE = '#1E5BFF', BLUE2 = '#5A86FF';
+  const INK = '#0F1633', INK2 = '#3A4170', LINE = '#E2E5F1';
+  Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
+  Chart.defaults.font.size = 14;
+  Chart.defaults.color = INK2;
+
+  // Data
+  const janOverview = [["1 January","204","17","9","-7","0"],["2 January","125","6","0","-1","0"],["3 January","98","18","1","0","0"],["4 January","72","2","0","0","0"],["5 January","71","25","0","0","0"],["6 January","127","15","3","-2","1"],["7 January","123","29","0","0","0"],["8 January","158","43","0","-1","0"],["9 January","144","28","4","-1","0"],["10 January","141","26","3","0","0"],["11 January","124","2","0","0","0"],["12 January","101","14","3","-1","0"],["13 January","126","18","0","-1","0"],["14 January","209","22","9","-1","0"],["15 January","261","32","14","-1","0"],["16 January","199","4","3","-1","0"],["17 January","220","18","1","-1","0"],["18 January","229","4","7","-3","0"],["19 January","198","34","7","-7","0"],["20 January","212","37","4","-1","0"],["21 January","267","14","1","-1","0"],["22 January","275","18","6","-1","0"],["23 January","176","13","3","0","0"],["24 January","192","9","3","0","0"],["25 January","257","12","1","-1","1"],["26 January","246","18","7","0","0"],["27 January","211","16","7","-3","0"],["28 January","299","10","8","-3","0"],["29 January","303","18","12","-1","0"],["30 January","317","7","1","-4","0"],["31 January","270","13","5","-2","1"]];
+  const aprOverview = [["1 April","419","4","15","0","0"],["2 April","553","8","17","-2","1"],["3 April","262","12","0","-1","2"],["4 April","262","5","4","-1","0"],["5 April","390","8","6","-2","1"],["6 April","383","8","4","-1","0"],["7 April","695","5","45","-2","0"],["8 April","511","18","5","0","1"],["9 April","274","5","2","-1","0"],["10 April","469","5","15","0","2"],["11 April","465","10","7","0","5"],["12 April","222","2","2","-1","0"],["13 April","483","4","9","-1","0"],["14 April","604","8","20","0","1"],["15 April","448","8","2","0","5"],["16 April","335","6","7","-3","0"],["17 April","1073","13","9","0","5"],["18 April","899","2","10","0","1"],["19 April","1014","7","11","0","0"],["20 April","860","5","8","1","2"],["21 April","110882","102","72","0","7"],["22 April","173627","166","146","1","1228"],["23 April","92986","171","93","3","1"],["24 April","258686","143","106","-1","2"],["25 April","220610","112","99","0","2"],["26 April","175391","108","74","1","2"],["27 April","153302","152","122","2","5"],["28 April","217833","120","74","3","1"],["29 April","61967","39","319","8","26"]];
+
+  const days = Array.from({length:31},(_,i)=>i+1);
+  const janViews = janOverview.map(r=>+r[1]);
+  const aprViewsPad = days.map(d => {
+    const r = aprOverview.find(x => parseInt(x[0]) === d);
+    return r ? +r[1] : null;
+  });
+  const janProfile = janOverview.map(r=>+r[2]);
+  const aprProfilePad = days.map(d => {
+    const r = aprOverview.find(x => parseInt(x[0]) === d);
+    return r ? +r[2] : null;
+  });
+
+  // Chart 1: Avg daily views (bar)
+  new Chart(document.getElementById('chart-avg-views'), {
+    type:'bar',
+    data:{
+      labels:['January', 'April'],
+      datasets:[{
+        data:[192, 50893],
+        backgroundColor:[PINK, BLUE],
+        borderRadius:12,
+        barThickness:120,
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}, tooltip:{enabled:false},
+        datalabels:false},
+      scales:{
+        y:{beginAtZero:true, grid:{color:LINE}, ticks:{font:{size:14},
+          callback:v=> v>=1000?(v/1000).toFixed(0)+'K':v}},
+        x:{grid:{display:false}, ticks:{font:{size:18,weight:'600'}}}
+      }
+    }
+  });
+
+  // Chart 2: Total engagement
+  new Chart(document.getElementById('chart-engagement'), {
+    type:'bar',
+    data:{
+      labels:['Likes','Shares','Comments'],
+      datasets:[
+        {label:'January', data:[122,3,45], backgroundColor:PINK, borderRadius:8, barThickness:60},
+        {label:'April', data:[1303,1300,35], backgroundColor:BLUE, borderRadius:8, barThickness:60}
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom', labels:{font:{size:16,weight:'600'},boxWidth:14,boxHeight:14,padding:18}},
+        tooltip:{enabled:false}},
+      scales:{
+        y:{beginAtZero:true, grid:{color:LINE}, type:'logarithmic', ticks:{font:{size:13}}},
+        x:{grid:{display:false}, ticks:{font:{size:16,weight:'600'}}}
+      }
+    }
+  });
+
+  // Chart: Daily views log scale
+  new Chart(document.getElementById('chart-daily-views'), {
+    type:'line',
+    data:{
+      labels:days,
+      datasets:[
+        {label:'January', data:janViews, borderColor:PINK, backgroundColor:'rgba(255,46,126,.08)', tension:.35, borderWidth:3, pointRadius:0, pointHoverRadius:0, fill:true},
+        {label:'April', data:aprViewsPad, borderColor:BLUE, backgroundColor:'rgba(30,91,255,.08)', tension:.35, borderWidth:3, pointRadius:0, pointHoverRadius:0, fill:true, spanGaps:true}
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom', labels:{font:{size:15,weight:'600'},boxWidth:14,boxHeight:14,padding:16}}, tooltip:{enabled:false}},
+      scales:{
+        y:{type:'logarithmic', grid:{color:LINE}, ticks:{font:{size:12},
+          callback:v=> v>=1000?(v/1000)+'K':v}},
+        x:{grid:{display:false}, ticks:{font:{size:12}, maxRotation:0, autoSkip:true, maxTicksLimit:10},
+          title:{display:true, text:'Day of month', font:{size:13,weight:'600'}, color:INK2}}
+      }
+    }
+  });
+
+  // Chart: Engagement bar (linear, side by side)
+  new Chart(document.getElementById('chart-engagement-bars'), {
+    type:'bar',
+    data:{
+      labels:['Likes','Shares','Comments','Profile Visits'],
+      datasets:[
+        {label:'January', data:[122,3,45,542], backgroundColor:PINK, borderRadius:8, barThickness:48},
+        {label:'April', data:[1303,1300,35,1256], backgroundColor:BLUE, borderRadius:8, barThickness:48}
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom', labels:{font:{size:15,weight:'600'},boxWidth:14,boxHeight:14,padding:16}}, tooltip:{enabled:false}},
+      scales:{
+        y:{beginAtZero:true, grid:{color:LINE}, ticks:{font:{size:13}}},
+        x:{grid:{display:false}, ticks:{font:{size:14,weight:'600'}}}
+      }
+    }
+  });
+
+  // Chart: Profile views daily
+  new Chart(document.getElementById('chart-profile'), {
+    type:'line',
+    data:{
+      labels:days,
+      datasets:[
+        {label:'January', data:janProfile, borderColor:PINK, backgroundColor:'rgba(255,46,126,.1)', tension:.35, borderWidth:3, pointRadius:0, fill:true},
+        {label:'April', data:aprProfilePad, borderColor:BLUE, backgroundColor:'rgba(30,91,255,.1)', tension:.35, borderWidth:3, pointRadius:0, fill:true, spanGaps:true}
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom', labels:{font:{size:15,weight:'600'},boxWidth:14,boxHeight:14,padding:16}}, tooltip:{enabled:false}},
+      scales:{
+        y:{beginAtZero:true, grid:{color:LINE}, ticks:{font:{size:13}}},
+        x:{grid:{display:false}, ticks:{font:{size:12}, maxRotation:0, autoSkip:true, maxTicksLimit:10}}
+      }
+    }
+  });
+
+  // Followers (indexed to month start)
+  const janHist = [112967,112937,112901,112862,112835,112810,112781,112755,112724,112700,112678,112646,112623,112604,112565,112521,112489,112470,112441,112403,112374,112357,112329,112304,112273,112247,112218,112195,112178,112148,112115];
+  const aprHist = [111614,111603,111600,111593,111581,111568,111560,111549,111538,111524,111512,111497,111486,111478,111467,111449,111440,111426,111412,111400,111389,111382,111378,111384,111378,111375,111375,111370,111673];
+  const janIdx = janHist.map(v => v - janHist[0]);
+  const aprIdx = aprHist.map(v => v - aprHist[0]);
+  // pad april to 31
+  while(aprIdx.length<31) aprIdx.push(null);
+
+  new Chart(document.getElementById('chart-followers'),{
+    type:'line',
+    data:{
+      labels:days,
+      datasets:[
+        {label:'January (Δ from day 1)', data:janIdx, borderColor:PINK, backgroundColor:'rgba(255,46,126,.1)', borderWidth:3, tension:.3, pointRadius:0, fill:true},
+        {label:'April (Δ from day 1)', data:aprIdx, borderColor:BLUE, backgroundColor:'rgba(30,91,255,.1)', borderWidth:3, tension:.3, pointRadius:0, fill:true, spanGaps:true}
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom', labels:{font:{size:15,weight:'600'},boxWidth:14,boxHeight:14,padding:16}}, tooltip:{enabled:false}},
+      scales:{
+        y:{grid:{color:LINE}, ticks:{font:{size:13}}, title:{display:true,text:'Net follower change',font:{size:13,weight:'600'},color:INK2}},
+        x:{grid:{display:false}, ticks:{font:{size:12},maxRotation:0,autoSkip:true,maxTicksLimit:10}}
+      }
+    }
+  });
+
+  // Gender donuts
+  function donut(id, colors){
+    new Chart(document.getElementById(id),{
+      type:'doughnut',
+      data:{labels:['Male','Female','Other'], datasets:[{data:[58,38,4],backgroundColor:colors,borderWidth:0,hoverOffset:8}]},
+      options:{
+        responsive:true, maintainAspectRatio:true,
+        cutout:'66%',
+        plugins:{legend:{display:false}, tooltip:{enabled:false}}
+      }
+    });
+  }
+  donut('chart-gender-jan',[PINK, PINK2, '#C9A6BE']);
+  // April actually 59/37/4
+  new Chart(document.getElementById('chart-gender-apr'),{
+    type:'doughnut',
+    data:{labels:['Male','Female','Other'], datasets:[{data:[59,37,4],backgroundColor:[BLUE, BLUE2, '#A6BAD9'],borderWidth:0}]},
+    options:{responsive:true, maintainAspectRatio:true, cutout:'66%', plugins:{legend:{display:false}, tooltip:{enabled:false}}}
+  });
+</script>
+
+</body>
+</html>
